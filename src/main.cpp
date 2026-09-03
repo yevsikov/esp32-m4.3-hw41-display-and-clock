@@ -3,6 +3,8 @@
 #define RTC_ADDR 0x68
 #define OLED_ADDR 0x3C
 
+const char *const WEEKDAY_NAMES[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
 // BCD конвертація
 uint8_t bcd_to_dec(uint8_t bcd) {
     return ((bcd >> 4) * 10) + (bcd & 0x0F);
@@ -12,22 +14,30 @@ uint8_t dec_to_bcd(uint8_t dec) {
     return ((dec / 10) << 4) | (dec % 10);
 }
 
-// Зчитування часу з DS1307
-void read_time(uint8_t *h, uint8_t *m, uint8_t *s) {
-    uint8_t data[3];
+// Зчитування часу та дати з DS1307
+void read_datetime(uint8_t *h, uint8_t *m, uint8_t *s, uint8_t *dow, uint8_t *day, uint8_t *month, uint16_t *year) {
+    uint8_t data[7];
    
     Wire.beginTransmission(RTC_ADDR);
     Wire.write(0x00);
     Wire.endTransmission(false);
    
-    Wire.requestFrom(RTC_ADDR, 3);
+    Wire.requestFrom(RTC_ADDR, 7);
     data[0] = Wire.read();  // Seconds
     data[1] = Wire.read();  // Minutes
     data[2] = Wire.read();  // Hours
+    data[3] = Wire.read();  // Day of week
+    data[4] = Wire.read();  // Day
+    data[5] = Wire.read();  // Month
+    data[6] = Wire.read();  // Year
   
     *s = bcd_to_dec(data[0] & 0x7F);
     *m = bcd_to_dec(data[1]);
     *h = bcd_to_dec(data[2] & 0x3F);
+    *dow = bcd_to_dec(data[3]);
+    *day = bcd_to_dec(data[4]);
+    *month = bcd_to_dec(data[5] & 0x1F);
+    *year = 2000 + bcd_to_dec(data[6]);
 }
 
 // Ініціалізація OLED дисплея
@@ -61,20 +71,32 @@ void print_time_oled(uint8_t h, uint8_t m, uint8_t s) {
 
 void setup() {
     Serial.begin(115200);
-    Wire.begin(21, 22);  // ESP32: SDA=21, SCL=22
+    Wire.begin(8, 9); 
     
-    init_oled();
+    //init_oled();
     delay(100);
  
     Serial.println("System initialized!");
 }
 
 void loop() {
-    uint8_t hour, min, sec;
+    uint8_t hour, min, sec, dow, day, month;
+    uint16_t year;
    
-    read_time(&hour, &min, &sec);
+    read_datetime(&hour, &min, &sec, &dow, &day, &month, &year);
    
-    // Форматований вивід
+    // Форматований вивід дати й часу
+    Serial.print(WEEKDAY_NAMES[(dow >= 1 && dow <= 7) ? dow - 1 : 0]);
+    Serial.print(" ");
+    if (day < 10) Serial.print("0");
+    Serial.print(day);
+    Serial.print(".");
+    if (month < 10) Serial.print("0");
+    Serial.print(month);
+    Serial.print(".");
+    Serial.print(year);
+    Serial.print(" ");
+    if (hour < 10) Serial.print("0");
     Serial.print(hour);
     Serial.print(":");
     if (min < 10) Serial.print("0");
@@ -88,8 +110,3 @@ void loop() {
   
     delay(1000);
 }
-
-// Очікуваний вивід:
-// 12:30:47
-// 12:30:48
-// 12:30:49
