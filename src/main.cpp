@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
-#define RTC_ADDR 0x68
-#define OLED_ADDR 0x3C
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 const char *const WEEKDAY_NAMES[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
