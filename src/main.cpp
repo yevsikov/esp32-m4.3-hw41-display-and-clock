@@ -3,7 +3,14 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-const char *const WEEKDAY_NAMES[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+const char *const WEEKDAY_NAMES[] = {"HeD", "nOH", "BT", "CP", "4T", "nT", "Cy6"};
+static constexpr uint8_t RTC_ADDR = 0x68;
+static constexpr int OLED_WIDTH = 128;
+static constexpr int OLED_HEIGHT = 64;
+static constexpr int OLED_RESET = -1;
+static constexpr uint8_t OLED_ADDR = 0x3C;
+
+Adafruit_SSD1306 display(OLED_WIDTH, OLED_HEIGHT, &Wire, OLED_RESET);
 
 // BCD конвертація
 uint8_t bcd_to_dec(uint8_t bcd) {
@@ -58,15 +65,35 @@ void init_oled() {
 }
 
 // Виведення часу на OLED (спрощено - потребує бібліотеки)
-void print_time_oled(uint8_t h, uint8_t m, uint8_t s) {
+void print_time_oled(uint8_t hour, uint8_t minute, uint8_t second, uint8_t dow, uint8_t day, uint8_t month, uint16_t year)  {
+    char date_line[32];
+    char time_line[16];
+
+    snprintf(date_line, sizeof(date_line), "%s %02u.%02u.%04u", WEEKDAY_NAMES[(dow >= 1 && dow <= 7) ? dow - 1 : 0], day, month, year);
+    snprintf(time_line, sizeof(time_line), "%02u:%02u:%02u", hour, minute, second);
+
+
+    display.clearDisplay();
+    display.setTextColor(SSD1306_WHITE);
+	
+	display.setTextSize(1);
+	
+    display.setCursor(0, 0);
+    display.println("RTC time");
+    display.println(date_line);
+	
+    display.setTextSize(2);
+    display.setCursor(0, 24);
+    display.println(time_line);
+    display.display();
 
     // Для справжньої реалізації необхідні шрифтові дані та складна математика
     // Наведено структуру:
-    Wire.beginTransmission(OLED_ADDR);
-    Wire.write(0x40);  // Control Byte: дані
+    // Wire.beginTransmission(OLED_ADDR);
+    // Wire.write(0x40);  // Control Byte: дані
 
-    // Тут розташовується піксельна інформація для символів часу
-    Wire.endTransmission();
+    // // Тут розташовується піксельна інформація для символів часу
+    // Wire.endTransmission();
 }
 
 void setup() {
@@ -75,7 +102,18 @@ void setup() {
     
     //init_oled();
     delay(100);
+
+    if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
+        Serial.println("SSD1306 init failed");
+    }
  
+    display.clearDisplay();
+    display.setTextColor(SSD1306_WHITE);
+    display.setTextSize(1);
+    display.setCursor(0, 0);
+    display.println("RTC display starting...");
+    display.display();
+
     Serial.println("System initialized!");
 }
 
@@ -84,7 +122,7 @@ void loop() {
     uint16_t year;
    
     read_datetime(&hour, &min, &sec, &dow, &day, &month, &year);
-   
+
     // Форматований вивід дати й часу
     Serial.print(WEEKDAY_NAMES[(dow >= 1 && dow <= 7) ? dow - 1 : 0]);
     Serial.print(" ");
@@ -106,7 +144,7 @@ void loop() {
     Serial.println(sec);
    
     // Виведення на OLED (потребує бібліотеки)
-    // print_time_oled(hour, min, sec);
+    print_time_oled(hour, min, sec, dow, day, month, year);
   
     delay(1000);
 }
