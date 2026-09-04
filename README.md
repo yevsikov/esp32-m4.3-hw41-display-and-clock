@@ -43,6 +43,18 @@ LCD SSD1306-Revision 1.1
 +--------+
 
 
+BME280
+
++--------+
+|        |-- VCC ----> 3.3V
+|        |-- GND ----> GND
+|  BME   |-- SCL ----> GPIO 12 (SCK)
+|        |-- SDA ----> GPIO 11 (MOSI)
+|        |-- CSB ----> GPIO 10 (CS)
+|        |-- SDO ----> GPIO 13 (MISO)
++--------+
+
+
 
 ```
 LCD
