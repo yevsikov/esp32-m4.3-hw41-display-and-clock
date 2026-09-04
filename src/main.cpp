@@ -75,12 +75,14 @@ void init_oled() {
 }
 
 // Виведення часу на OLED (спрощено - потребує бібліотеки)
-void print_time_oled(uint8_t hour, uint8_t minute, uint8_t second, uint8_t dow, uint8_t day, uint8_t month, uint16_t year)  {
+void print_time_oled(uint8_t hour, uint8_t minute, uint8_t second, uint8_t dow, uint8_t day, uint8_t month, uint16_t year, float temperature, float pressure, float humidity)  {
     char date_line[32];
     char time_line[16];
+    char sensor_line[32];
 
     snprintf(date_line, sizeof(date_line), "%s %02u.%02u.%04u", WEEKDAY_NAMES[(dow >= 1 && dow <= 7) ? dow - 1 : 0], day, month, year);
     snprintf(time_line, sizeof(time_line), "%02u:%02u:%02u", hour, minute, second);
+    snprintf(sensor_line, sizeof(sensor_line), "%.1fC %.0fhPa %.0f%%", temperature, pressure, humidity);
 
 
     display.clearDisplay();
@@ -95,6 +97,10 @@ void print_time_oled(uint8_t hour, uint8_t minute, uint8_t second, uint8_t dow, 
     display.setTextSize(2);
     display.setCursor(0, 24);
     display.println(time_line);
+
+    display.setTextSize(1);
+    display.setCursor(0, 48);
+    display.println(sensor_line);
     display.display();
 
     // Для справжньої реалізації необхідні шрифтові дані та складна математика
@@ -156,21 +162,25 @@ void loop() {
     Serial.print(":");
     if (sec < 10) Serial.print("0");
     Serial.println(sec);
-   
+
+    float temperature = bme.readTemperature();
+    float pressure = bme.readPressure() / 100.0;
+    float humidity = bme.readHumidity();
+
     // Виведення на OLED (потребує бібліотеки)
-    print_time_oled(hour, min, sec, dow, day, month, year);
+    print_time_oled(hour, min, sec, dow, day, month, year, temperature, pressure, humidity);
 
 
     Serial.print("Temperature: ");
-    Serial.print(bme.readTemperature());
+    Serial.print(temperature);
     Serial.println(" °C");
 
     Serial.print("Pressure: ");
-    Serial.print(bme.readPressure() / 100.0);
+    Serial.print(pressure);
     Serial.println(" hPa");
 
     Serial.print("Humidity: ");
-    Serial.print(bme.readHumidity());
+    Serial.print(humidity);
     Serial.println(" %");
   
     delay(1000);
