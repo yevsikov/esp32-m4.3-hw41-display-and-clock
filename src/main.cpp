@@ -2,6 +2,16 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
+
+#define BME_CS   10
+#define BME_MOSI 11
+#define BME_MISO 13
+#define BME_SCK  12
+
+// BME280 підключено через (програмний) SPI, окремо від I2C-шини OLED/RTC
+Adafruit_BME280 bme(BME_CS, BME_MOSI, BME_MISO, BME_SCK);
 
 const char *const WEEKDAY_NAMES[] = {"HeD", "nOH", "BT", "CP", "4T", "nT", "Cy6"};
 static constexpr uint8_t RTC_ADDR = 0x68;
@@ -105,6 +115,10 @@ void setup() {
 
     if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
         Serial.println("SSD1306 init failed");
+    }
+ 
+    if (!bme.begin()) {
+        Serial.println("BME280 not found!");
     }
  
     display.clearDisplay();
