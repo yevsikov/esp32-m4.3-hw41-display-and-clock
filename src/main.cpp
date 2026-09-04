@@ -116,7 +116,7 @@ void setup() {
     if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
         Serial.println("SSD1306 init failed");
     }
- 
+
     if (!bme.begin()) {
         Serial.println("BME280 not found!");
     }
@@ -159,6 +159,19 @@ void loop() {
    
     // Виведення на OLED (потребує бібліотеки)
     print_time_oled(hour, min, sec, dow, day, month, year);
+
+
+    Serial.print("Temperature: ");
+    Serial.print(bme.readTemperature());
+    Serial.println(" °C");
+
+    Serial.print("Pressure: ");
+    Serial.print(bme.readPressure() / 100.0);
+    Serial.println(" hPa");
+
+    Serial.print("Humidity: ");
+    Serial.print(bme.readHumidity());
+    Serial.println(" %");
   
     delay(1000);
 }
